@@ -1,5 +1,5 @@
 import { initializeApp, getApp, getApps } from "firebase/app"
-import { getAuth, setPersistence } from "firebase/auth"
+import { getAuth, setPersistence, inMemoryPersistence } from "firebase/auth"
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW1tBI6rH5rbG4jOPeg7GDAvsMznC75eI",
@@ -17,4 +17,11 @@ function initializeFirebase() {
 
 const firebaseApp = initializeFirebase()
 export const clientAuth = getAuth(firebaseApp)
-setPersistence(clientAuth, { type: "NONE" })
+setPersistence(
+  clientAuth,
+  typeof document === "undefined"
+    ? inMemoryPersistence
+    : {
+        type: "NONE",
+      }
+)

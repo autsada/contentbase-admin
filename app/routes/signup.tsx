@@ -34,6 +34,7 @@ export async function action({ request }: ActionArgs) {
   try {
     session = await getSession(request.headers.get("cookie"))
     await verifyAuthenticityToken(request, session)
+    // Get the `idToken` from the request
     const form = await request.formData()
     const { idToken } = Object.fromEntries(form) as { idToken: string }
     const { sessionCookie, uid } = await createSessionCookie(idToken)

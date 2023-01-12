@@ -20,6 +20,7 @@ export function SignUpForm() {
     const password = target["password"].value
     const { idToken } = await signUp(email, password)
 
+    // Send the `idToken` and `csrf` token to the `action` function on the server.
     fetcher.submit({ idToken, csrf }, { method: "post" })
   }
 

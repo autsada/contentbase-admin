@@ -19,6 +19,7 @@ export function LoginForm() {
     const password = target["password"].value
     const { idToken } = await login(email, password)
 
+    // Send the `idToken` and `csrf` token to the `action` function on the server.
     fetcher.submit({ idToken, csrf }, { method: "post" })
   }
 
