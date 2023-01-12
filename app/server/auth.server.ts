@@ -26,3 +26,23 @@ export async function requireAuth(request: Request) {
 
   return auth.getUser(uid)
 }
+
+export async function createSessionCookie(idToken: string) {
+  const decodedIdToken = await auth.verifyIdToken(idToken)
+  // Only process if the user just signed in in the last 5 minutes.
+  if (new Date().getTime() / 1000 - decodedIdToken.auth_time < 5 * 60) {
+    const expiresIn = 1000 * 60 * 60 * 24 * 7 // 1 week
+    return {
+      uid: decodedIdToken.uid,
+      sessionCookie: await auth.createSessionCookie(idToken, {
+        expiresIn,
+      }),
+    }
+  }
+
+  throw new Error("Recent sign in required!")
+}
+
+export async function deleteUser(uid: string) {
+  return auth.deleteUser(uid)
+}
