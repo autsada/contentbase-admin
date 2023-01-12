@@ -1,17 +1,16 @@
 // import React from "react"
 import "firebase/auth"
-import type { LoaderArgs } from "@remix-run/node"
+import type { ActionArgs, LoaderArgs, Session } from "@remix-run/node"
 import { json, redirect } from "@remix-run/node"
-// import {
-//   ClientOnly,
-//   createAuthenticityToken,
-//   unauthorized,
-//   useAuthenticityToken,
-//   useHydrated,
-// } from "remix-utils"
+import { verifyAuthenticityToken, ClientOnly } from "remix-utils"
 
-import { getSession, commitSession } from "~/server/session.server"
-import { checkSessionCookie } from "~/server/auth.server"
+import {
+  getSession,
+  commitSession,
+  destroySession,
+} from "~/server/session.server"
+import { checkSessionCookie, createSessionCookie } from "~/server/auth.server"
+import { LoginForm } from "~/components/login-form"
 
 // We need Javascript client side to run the Firebase Login component
 export const handle = { hydrate: true }
@@ -29,14 +28,32 @@ export const loader = async ({ request }: LoaderArgs) => {
   return json(null, { headers })
 }
 
-// export const action = async ({ request }: ActionArgs) => {}
+export async function action({ request }: ActionArgs) {
+  let session: Session | undefined = undefined
+
+  try {
+    session = await getSession(request.headers.get("cookie"))
+    await verifyAuthenticityToken(request, session)
+    const form = await request.formData()
+    const { idToken } = Object.fromEntries(form) as { idToken: string }
+    const { sessionCookie } = await createSessionCookie(idToken)
+    session.set("session", sessionCookie)
+
+    return redirect("/", {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    })
+  } catch (error) {
+    if (session) {
+      // Delete cookie
+      await destroySession(session)
+    }
+
+    return json({ error: String(error) }, { status: 401 })
+  }
+}
 
 export default function Login() {
-  // const hydrated = useHydrated()
-
-  return (
-    <div>
-      <h3 className="text-3xl">Login Page</h3>
-    </div>
-  )
+  return <ClientOnly>{() => <LoginForm />}</ClientOnly>
 }

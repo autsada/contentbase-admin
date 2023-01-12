@@ -2,9 +2,9 @@ import React from "react"
 import { useFetcher, Link } from "@remix-run/react"
 import { useAuthenticityToken, useHydrated } from "remix-utils"
 
-import { signUp } from "~/client/auth.client"
+import { login } from "~/client/auth.client"
 
-export function SignUpForm() {
+export function LoginForm() {
   const fetcher = useFetcher()
   const csrf = useAuthenticityToken()
   const hydrated = useHydrated()
@@ -12,13 +12,12 @@ export function SignUpForm() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const target = e.target as typeof e.target & {
-      name: { value: string }
       email: { value: string }
       password: { value: string }
     }
     const email = target["email"].value
     const password = target["password"].value
-    const { idToken } = await signUp(email, password)
+    const { idToken } = await login(email, password)
 
     fetcher.submit({ idToken, csrf }, { method: "post" })
   }
@@ -26,12 +25,6 @@ export function SignUpForm() {
   return (
     <div>
       <fetcher.Form method="post" className="py-10" onSubmit={handleSubmit}>
-        <input
-          style={{ display: "block", margin: "0 auto" }}
-          name="name"
-          placeholder="Peter"
-          type="text"
-        />
         <input
           style={{ display: "block", margin: "0 auto" }}
           name="email"
@@ -54,7 +47,7 @@ export function SignUpForm() {
       </fetcher.Form>
 
       <div>
-        <Link to="/login">Login</Link>
+        <Link to="/signup">Sign up</Link>
       </div>
     </div>
   )
