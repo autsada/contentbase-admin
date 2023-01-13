@@ -1,31 +1,16 @@
-// import React from "react"
-import "firebase/auth"
-import type { ActionArgs, LoaderArgs, Session } from "@remix-run/node"
+import type { ActionArgs, Session } from "@remix-run/node"
 import { json, redirect } from "@remix-run/node"
-import { verifyAuthenticityToken, ClientOnly } from "remix-utils"
+import { verifyAuthenticityToken } from "remix-utils"
+import { createSessionCookie } from "~/server/auth.server"
 
 import {
   getSession,
-  commitSession,
   destroySession,
+  commitSession,
 } from "~/server/session.server"
-import { checkSessionCookie, createSessionCookie } from "~/server/auth.server"
-import { LoginForm } from "~/components/login-form"
 
-// We need Javascript client side to run the Firebase Login component
-export const handle = { hydrate: true }
-
-export const loader = async ({ request }: LoaderArgs) => {
-  const session = await getSession(request.headers.get("cookie"))
-  const { uid } = await checkSessionCookie(session)
-  const headers = {
-    "Set-Cookie": await commitSession(session),
-  }
-
-  if (uid) {
-    return redirect("/", { headers })
-  }
-  return json(null, { headers })
+export function loader() {
+  return redirect("/")
 }
 
 export async function action({ request }: ActionArgs) {
@@ -53,8 +38,4 @@ export async function action({ request }: ActionArgs) {
 
     return json({ error: String(error) }, { status: 401 })
   }
-}
-
-export default function Login() {
-  return <ClientOnly>{() => <LoginForm />}</ClientOnly>
 }

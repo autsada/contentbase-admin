@@ -1,52 +1,32 @@
 import type { Session } from "@remix-run/node"
-import { redirect } from "@remix-run/node"
-import type { DecodedIdToken } from "firebase-admin/auth"
 
 import { auth } from "./firebase.server"
-import { getSession, destroySession } from "./session.server"
+import { getSession } from "./session.server"
 
 export async function checkSessionCookie(session: Session) {
   try {
-    const decodedToken = await auth.verifySessionCookie(
+    const decodedIdToken = await auth.verifySessionCookie(
       session.get("session") || ""
     )
-    return decodedToken
+    return decodedIdToken
   } catch (error) {
-    return { uid: undefined }
+    return null
   }
 }
 
 export async function requireAuth(request: Request) {
   const session = await getSession(request.headers.get("cookie"))
-  const { uid } = await checkSessionCookie(session)
-  if (!uid) {
-    throw redirect("/login", {
-      headers: { "Set-Cookie": await destroySession(session) },
-    })
+  const decodedIdToken = await checkSessionCookie(session)
+  if (!decodedIdToken || !decodedIdToken.uid) {
+    return null
   }
 
-  return auth.getUser(uid)
-}
-
-export function revokeToken(uid: string) {
-  return auth.revokeRefreshTokens(uid)
-}
-
-// Verify id token and check if user is an admin user
-export function verifyIdToken(idToken: string) {
-  return auth.verifyIdToken(idToken)
-}
-
-export function verifyAdmin(decodedIdToken: DecodedIdToken) {
-  // Only allow admin users to login
-  if (!decodedIdToken.super_admin && !decodedIdToken.admin) {
-    throw new Error("Not allowed")
-  }
+  return auth.getUser(decodedIdToken.uid)
 }
 
 export async function createSessionCookie(idToken: string) {
-  const decodedIdToken = await verifyIdToken(idToken)
-  verifyAdmin(decodedIdToken)
+  const decodedIdToken = await auth.verifyIdToken(idToken)
+
   // Only process if the user just signed in in the last 5 minutes.
   if (new Date().getTime() / 1000 - decodedIdToken.auth_time < 5 * 60) {
     const expiresIn = 1000 * 60 * 60 * 24 * 7 // 1 week
@@ -61,6 +41,19 @@ export async function createSessionCookie(idToken: string) {
   throw new Error("Recent sign in required!")
 }
 
-export async function deleteUser(uid: string) {
-  return auth.deleteUser(uid)
+/**
+ * Create Firebase Auth using a wallet address as uid
+ * @param address {string} - a wallet address
+ */
+export async function createUserIfNotExist(address: string) {
+  let user = await auth.getUser(address)
+  if (!user) {
+    user = await auth.createUser({ uid: address })
+  }
+
+  return user
+}
+
+export function createCustomToken(uid: string) {
+  return auth.createCustomToken(uid)
 }

@@ -4,7 +4,7 @@ import { redirect } from "@remix-run/node"
 import { getSession, destroySession } from "~/server/session.server"
 
 export function loader() {
-  return redirect("/login")
+  return redirect("/")
 }
 
 export async function action({ request }: ActionArgs) {
