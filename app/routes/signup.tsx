@@ -8,7 +8,7 @@ import {
   commitSession,
   destroySession,
 } from "~/server/session.server"
-import { createSessionCookie, deleteUser } from "~/server/auth.server"
+import { deleteUser, verifyIdToken, revokeToken } from "~/server/auth.server"
 import { SignUpForm } from "~/components/signup-form"
 
 // We need Javascript client side to run the component
@@ -37,11 +37,13 @@ export async function action({ request }: ActionArgs) {
     // Get the `idToken` from the request
     const form = await request.formData()
     const { idToken } = Object.fromEntries(form) as { idToken: string }
-    const { sessionCookie, uid } = await createSessionCookie(idToken)
-    session.set("session", sessionCookie)
+    const { uid } = await verifyIdToken(idToken)
     userId = uid
 
-    return redirect("/", {
+    // Revoke token once user is created and force them to login again in order for the custom claims to be valid so we can check if the newly signed up user is an admin user.
+    await revokeToken(uid)
+
+    return redirect("/login", {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
