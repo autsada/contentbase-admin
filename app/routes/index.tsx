@@ -1,9 +1,8 @@
 import React from "react"
 import type { LoaderArgs, ActionArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import { Form, useLoaderData, useFetcher } from "@remix-run/react"
+import { useLoaderData, useFetcher } from "@remix-run/react"
 import { useAuthenticityToken, useHydrated } from "remix-utils"
-import { useWeb3Modal } from "@web3modal/react"
 import { useAccount, useDisconnect } from "wagmi"
 
 import {
@@ -12,6 +11,8 @@ import {
   createCustomToken,
 } from "~/server/auth.server"
 import { signInWithToken } from "~/client/auth.client"
+import { ConnectButton } from "~/components/connectButton"
+import { LogOutButton } from "~/components/logoutButton"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireAuth(request)
@@ -43,7 +44,6 @@ export default function Dashboard() {
   const [error, setError] = React.useState("")
 
   const { address, isConnected } = useAccount()
-  const { open } = useWeb3Modal()
   const { disconnect } = useDisconnect()
 
   // When users connected their wallet, submit the address to the server for processing Firebase Auth login
@@ -78,11 +78,6 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
-  async function openModal() {
-    setProcessingLogin(true)
-    await open()
-  }
-
   function logOut() {
     // Make sure to reset the processing state
     if (processingLogin) setProcessingLogin(false)
@@ -97,28 +92,14 @@ export default function Dashboard() {
       {data.user ? (
         <div className="mt-6">
           <h3 className="text-3xl">Dashboard</h3>
-          <Form method="post" onSubmit={logOut}>
-            <button type="submit" disabled={!hydrated}>
-              Logout
-            </button>
-          </Form>
+          <LogOutButton logOut={logOut} disabled={!hydrated} />
         </div>
       ) : (
-        <div className="mt-6 flex-col items-center">
-          {/* <Form method="post"></Form> */}
-          <div>
-            <Form method="post" onSubmit={openModal}>
-              <button type="submit" disabled={!hydrated || processingLogin}>
-                {processingLogin ? "Connecting..." : "Connect Wallet"}
-              </button>
-            </Form>
-          </div>
-          <div className="mt-10">
-            <button disabled={!hydrated} onClick={() => disconnect()}>
-              Disconnect
-            </button>
-          </div>
-        </div>
+        <ConnectButton
+          processing={processingLogin}
+          setProcessing={setProcessingLogin}
+          disabled={!hydrated || processingLogin}
+        />
       )}
     </div>
   )
