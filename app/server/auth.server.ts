@@ -1,4 +1,5 @@
 import type { Session } from "@remix-run/node"
+import type { UserRecord } from "firebase-admin/auth"
 
 import { auth } from "./firebase.server"
 import { getSession } from "./session.server"
@@ -46,7 +47,13 @@ export async function createSessionCookie(idToken: string) {
  * @param address {string} - a wallet address
  */
 export async function createUserIfNotExist(address: string) {
-  let user = await auth.getUser(address)
+  let user: UserRecord | null = null
+  try {
+    user = await auth.getUser(address)
+  } catch (error) {
+    user = null
+  }
+
   if (!user) {
     user = await auth.createUser({ uid: address })
   }

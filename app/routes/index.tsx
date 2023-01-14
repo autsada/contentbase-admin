@@ -1,13 +1,10 @@
 import React from "react"
 import type { LoaderArgs, ActionArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
-import {
-  Form,
-  useLoaderData,
-  useActionData,
-  useFetcher,
-} from "@remix-run/react"
+import { Form, useLoaderData, useFetcher } from "@remix-run/react"
 import { useAuthenticityToken, useHydrated } from "remix-utils"
+import { useWeb3Modal } from "@web3modal/react"
+import { useAccount, useDisconnect } from "wagmi"
 
 import {
   requireAuth,
@@ -25,21 +22,39 @@ export async function action({ request }: ActionArgs) {
   // Get a wallet address from the request
   const form = await request.formData()
   const { address } = Object.fromEntries(form) as { address: string }
-  const user = await createUserIfNotExist(address)
-  const token = await createCustomToken(user.uid)
-  return json({ token })
+
+  if (address) {
+    const user = await createUserIfNotExist(address)
+    const token = await createCustomToken(user.uid)
+    return json({ token })
+  } else {
+    return json({ token: null })
+  }
 }
 
 export default function Dashboard() {
   const data = useLoaderData<typeof loader>()
-  const actionData = useActionData<typeof action>()
-  const token = actionData?.token
-  const fetcher = useFetcher()
+  const fetcher = useFetcher<typeof action>()
+  const token = fetcher?.data?.token
   const csrf = useAuthenticityToken()
   const hydrated = useHydrated()
 
+  const [processingLogin, setProcessingLogin] = React.useState(false)
   const [error, setError] = React.useState("")
 
+  const { address, isConnected } = useAccount()
+  const { open } = useWeb3Modal()
+  const { disconnect } = useDisconnect()
+
+  // When users connected their wallet, submit the address to the server for processing Firebase Auth login
+  React.useEffect(() => {
+    if (isConnected && !!address) {
+      fetcher.submit({ address }, { method: "post" })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, isConnected])
+
+  // Function to sign in with custom token
   const login = React.useCallback(
     async (token: string) => {
       try {
@@ -49,35 +64,60 @@ export default function Dashboard() {
         fetcher.submit({ idToken, csrf }, { method: "post", action: "/login" })
       } catch (error) {
         setError("Error occurred while attempting to login")
+        setProcessingLogin(false)
       }
     },
-    [fetcher, csrf]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [csrf]
   )
 
   React.useEffect(() => {
     if (token) {
       login(token)
     }
-  }, [token, login])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
 
+  async function openModal() {
+    setProcessingLogin(true)
+    await open()
+  }
+
+  function logOut() {
+    // Make sure to reset the processing state
+    if (processingLogin) setProcessingLogin(false)
+    // Disconnect from the wallet before processing session logout
+    disconnect()
+    fetcher.submit({}, { method: "post", action: "/logout" })
+  }
+
+  console.log("error -->", error)
   return (
     <div>
       {data.user ? (
         <div className="mt-6">
           <h3 className="text-3xl">Dashboard</h3>
-          <Form action="/logout" method="post">
+          <Form method="post" onSubmit={logOut}>
             <button type="submit" disabled={!hydrated}>
               Logout
             </button>
           </Form>
         </div>
       ) : (
-        <div className="mt-6">
-          <Form method="post">
-            <button type="submit" disabled={!hydrated}>
-              Connect Wallet
+        <div className="mt-6 flex-col items-center">
+          {/* <Form method="post"></Form> */}
+          <div>
+            <Form method="post" onSubmit={openModal}>
+              <button type="submit" disabled={!hydrated || processingLogin}>
+                {processingLogin ? "Connecting..." : "Connect Wallet"}
+              </button>
+            </Form>
+          </div>
+          <div className="mt-10">
+            <button disabled={!hydrated} onClick={() => disconnect()}>
+              Disconnect
             </button>
-          </Form>
+          </div>
         </div>
       )}
     </div>
