@@ -6,8 +6,9 @@ import {
 import { configureChains, mainnet, goerli, createClient } from "wagmi"
 
 import { WALLET_CONNECT_PROJECT_ID } from "~/utils/constants"
+import type { ENV } from "~/types"
 
-let NODE_ENV: any = "development"
+let NODE_ENV: ENV = "development"
 
 if (typeof window !== "undefined") {
   NODE_ENV = window.ENV.NODE_ENV

@@ -17,12 +17,13 @@ import {
 import { getSession, commitSession } from "./server/session.server"
 import { wagmiClient, ethereumClient } from "./ethereum/client"
 import { WALLET_CONNECT_PROJECT_ID } from "./utils/constants"
+import type { ENV } from "./types"
 import styles from "./styles/app.css"
 
 interface LoaderData {
   csrf: string
   ENV: {
-    NODE_ENV: "development" | "production" | "test"
+    NODE_ENV: ENV
   }
 }
 
