@@ -3,7 +3,8 @@ import {
   modalConnectors,
   walletConnectProvider,
 } from "@web3modal/ethereum"
-import { configureChains, mainnet, goerli, createClient } from "wagmi"
+import { configureChains, createClient } from "wagmi"
+import { mainnet, goerli, localhost } from "@wagmi/chains"
 
 import { WALLET_CONNECT_PROJECT_ID } from "~/utils/constants"
 import type { ENV } from "~/types"
@@ -14,7 +15,12 @@ if (typeof window !== "undefined") {
   NODE_ENV = window.ENV.NODE_ENV
 }
 
-const chains = NODE_ENV === "production" ? [mainnet] : [goerli]
+const chains =
+  NODE_ENV === "production"
+    ? [mainnet]
+    : NODE_ENV === "test"
+    ? [goerli]
+    : [localhost]
 
 const { provider } = configureChains(chains, [
   walletConnectProvider({ projectId: WALLET_CONNECT_PROJECT_ID }),
@@ -23,7 +29,7 @@ const { provider } = configureChains(chains, [
 // Wagmi client
 export const wagmiClient = createClient({
   autoConnect: true,
-  connectors: modalConnectors({ appName: "web3Modal", chains }),
+  connectors: modalConnectors({ appName: "ContentBase Admin", chains }),
   provider,
 })
 

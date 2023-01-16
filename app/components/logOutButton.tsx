@@ -7,7 +7,7 @@ interface Props {
 
 export function LogOutButton({ logOut, disabled }: Props) {
   return (
-    <div>
+    <div className="mb-6">
       <Form method="post" onSubmit={logOut}>
         <button type="submit" disabled={disabled}>
           Logout

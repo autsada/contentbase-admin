@@ -42,7 +42,8 @@ export async function loader({ request }: LoaderArgs) {
     {
       csrf: token,
       ENV: {
-        NODE_ENV: process.env.NODE_ENV,
+        // NODE_ENV: process.env.NODE_ENV,
+        NODE_ENV: "test",
       },
     },
     { headers: { "Set-Cookie": await commitSession(session) } }

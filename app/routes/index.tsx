@@ -1,9 +1,9 @@
 import React from "react"
 import type { LoaderArgs, ActionArgs } from "@remix-run/node"
 import { json } from "@remix-run/node"
+import { useWeb3Modal } from "@web3modal/react"
 import { useLoaderData, useFetcher } from "@remix-run/react"
 import { useAuthenticityToken, useHydrated, ClientOnly } from "remix-utils"
-import { useWeb3Modal } from "@web3modal/react"
 import { useAccount, useDisconnect } from "wagmi"
 
 import {
@@ -13,7 +13,11 @@ import {
 } from "~/server/auth.server"
 import { signInWithToken } from "~/client/auth.client"
 import { ConnectButton } from "~/components/connectButton"
-import { LogOutButton } from "~/components/logoutButton"
+import { LogOutButton } from "~/components/logOutButton"
+import { Follow } from "~/components/follow"
+import { Publish } from "~/components/publish"
+import { Comment } from "~/components/comment"
+import { Like } from "~/components/like"
 
 export async function loader({ request }: LoaderArgs) {
   const user = await requireAuth(request)
@@ -44,7 +48,7 @@ export default function Dashboard() {
   const [processingLogin, setProcessingLogin] = React.useState(false)
   const [logInError, setLogInError] = React.useState("")
 
-  const { address, isConnected, isConnecting } = useAccount()
+  const { address, isConnecting, isConnected, isDisconnected } = useAccount()
   const { disconnect } = useDisconnect()
   const { isOpen } = useWeb3Modal()
 
@@ -60,6 +64,7 @@ export default function Dashboard() {
   const login = React.useCallback(
     async (token: string) => {
       try {
+        setProcessingLogin(true)
         const credential = await signInWithToken(token)
         const idToken = await credential.user.getIdToken()
         // Send the `idToken` and `csrf` token to the `action` function on the server.
@@ -82,10 +87,10 @@ export default function Dashboard() {
   }, [token])
 
   React.useEffect(() => {
-    if (!isOpen && isConnecting) {
-      setProcessingLogin(false)
+    if (isDisconnected || !isOpen) {
+      if (processingLogin) setProcessingLogin(false)
     }
-  }, [isConnecting, isOpen])
+  }, [isDisconnected, processingLogin, isOpen])
 
   function logOut() {
     // Make sure to reset the processing state
@@ -101,13 +106,16 @@ export default function Dashboard() {
         <div>
           {data.user ? (
             <div className="mt-6">
-              <h3 className="text-3xl">Dashboard</h3>
               <LogOutButton logOut={logOut} disabled={!hydrated} />
+              <Follow />
+              <Publish />
+              <Comment />
+              <Like />
             </div>
           ) : (
             <ConnectButton
-              processing={processingLogin}
-              setProcessing={setProcessingLogin}
+              processingLogin={processingLogin}
+              connectingWallet={isConnecting && isOpen}
               disabled={!hydrated || processingLogin}
             />
           )}

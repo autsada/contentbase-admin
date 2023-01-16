@@ -3,16 +3,19 @@ import { Form } from "@remix-run/react"
 import { useWeb3Modal } from "@web3modal/react"
 
 interface Props {
-  processing: boolean
-  setProcessing: (processing: boolean) => void
+  processingLogin: boolean
+  connectingWallet: boolean
   disabled?: boolean
 }
 
-export function ConnectButton({ processing, setProcessing, disabled }: Props) {
+export function ConnectButton({
+  processingLogin,
+  connectingWallet,
+  disabled,
+}: Props) {
   const { open } = useWeb3Modal()
 
   async function openModal() {
-    setProcessing(true)
     await open()
   }
 
@@ -20,7 +23,9 @@ export function ConnectButton({ processing, setProcessing, disabled }: Props) {
     <div className="mt-6 flex-col items-center">
       <Form method="post" onSubmit={openModal}>
         <button type="submit" disabled={disabled}>
-          {processing ? "Connecting..." : "Connect Wallet"}
+          {connectingWallet || processingLogin
+            ? "Connecting..."
+            : "Connect Wallet"}
         </button>
       </Form>
     </div>
