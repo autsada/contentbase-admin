@@ -12,6 +12,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useCatch,
 } from "@remix-run/react"
 
 import { getSession, commitSession } from "./server/session.server"
@@ -96,6 +97,33 @@ export default function App() {
         projectId={WALLET_CONNECT_PROJECT_ID}
         ethereumClient={ethereumClient}
       />
+    </Document>
+  )
+}
+
+export function CatchBoundary() {
+  const caught = useCatch()
+
+  return (
+    <Document title={`${caught.status} ${caught.statusText}`}>
+      <div>
+        <h1>
+          {caught.status} {caught.statusText}
+        </h1>
+      </div>
+    </Document>
+  )
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+  console.error(error)
+
+  return (
+    <Document title="Oops! ...something not right">
+      <div className="error-container">
+        <h1>App Error</h1>
+        <pre>{error.message}</pre>
+      </div>
     </Document>
   )
 }
