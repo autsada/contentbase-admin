@@ -5,5 +5,4 @@ node_modules
 /public/build
 .env
 /app/styles/app.css
-/app/types/typechain-types
 test.js

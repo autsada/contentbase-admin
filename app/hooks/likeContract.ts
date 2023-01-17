@@ -201,3 +201,48 @@ export function useUpdatePriceFeedContract(contractAddress: string) {
 
   return { write, isLoading, isSuccess, isError, error }
 }
+
+export function useGetLikeFeeRate() {
+  const { data, isError, isLoading, error, refetch } = useContractRead({
+    address: contractInfo.address as any,
+    abi: [
+      {
+        type: "function",
+        name: "likeFeeRate",
+        constant: true,
+        stateMutability: "view",
+        payable: false,
+        inputs: [],
+        outputs: [{ type: "uint256" }],
+      },
+    ],
+    functionName: "likeFeeRate",
+  })
+
+  return { data: data?.toNumber(), isError, error, isLoading, refetch }
+}
+
+export function useUpdateLikeFeeRate(fee: number) {
+  const { config } = usePrepareContractWrite({
+    address: contractInfo.address as any,
+    abi: [
+      {
+        type: "function",
+        name: "updateLikeFeeRate",
+        constant: false,
+        payable: false,
+        inputs: [{ type: "uint256", name: "fee" }],
+        outputs: [],
+      },
+    ],
+    functionName: "updateLikeFeeRate",
+    args: [fee],
+    enabled: Boolean(fee),
+  })
+  const { data, write } = useContractWrite(config)
+  const { isLoading, isSuccess, isError, error } = useWaitForTransaction({
+    hash: data?.hash,
+  })
+
+  return { write, isLoading, isSuccess, isError, error }
+}

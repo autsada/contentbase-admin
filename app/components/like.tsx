@@ -9,6 +9,8 @@ import {
   useUpdatePlatformFee,
   useGetPriceFeedContractAddress,
   useUpdatePriceFeedContract,
+  useGetLikeFeeRate,
+  useUpdateLikeFeeRate,
 } from "~/hooks/likeContract"
 
 function UpdateProfileAddress() {
@@ -236,6 +238,66 @@ function UpdatePriceFeedContract() {
   )
 }
 
+function UpdateLikeFeeRate() {
+  const [fee, setFee] = React.useState(10)
+  const { data, refetch } = useGetLikeFeeRate()
+  const { write, isLoading, isSuccess, error, isError } =
+    useUpdateLikeFeeRate(fee)
+
+  React.useEffect(() => {
+    if (isSuccess) {
+      if (refetch) refetch()
+      setFee(10)
+    }
+  }, [isSuccess, refetch])
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    if (typeof fee !== "number" || !fee || fee < 0 || fee > 100 || !write)
+      return
+    e.preventDefault()
+    write()
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setFee(Number(e.target.value))
+  }
+
+  console.log("like fee rate/like -->", data)
+  return (
+    <form className="border-2 border-blue-300" onSubmit={submit}>
+      <div className="my-0 mx-auto w-1/3 border-2 border-red-300">
+        <label className="block">
+          Like Fee Rate
+          <abbr title="This field is mandatory" aria-label="required">
+            *
+          </abbr>
+          <input
+            type="number"
+            name="like-fee-rate"
+            required
+            min={1}
+            className="block w-full px-2"
+            onChange={handleChange}
+            value={fee}
+          />
+        </label>
+      </div>
+      <div>
+        <button
+          type="submit"
+          disabled={fee < 0 || fee > 100 || !write || isLoading}
+        >
+          {isLoading ? "Processing" : "Submit"}
+        </button>
+      </div>
+      <div>
+        <p>{!isError && isSuccess ? "Update successful" : <>&nbsp;</>}</p>
+        <p>{error ? <>{error.message}</> : <>&nbsp;</>}</p>
+      </div>
+    </form>
+  )
+}
+
 export function Like() {
   return (
     <div className="mb-10">
@@ -244,6 +306,7 @@ export function Like() {
       <UpdatePublishAddress />
       <UpdatePlatformFee />
       <UpdatePriceFeedContract />
+      <UpdateLikeFeeRate />
     </div>
   )
 }

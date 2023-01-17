@@ -1,5 +1,5 @@
 {
-  "address": "0x398646AA13f3aD424b67D678B4E72C5958726f2e",
+  "address": "0xb4be54ce79DC1ab9d64bd74aaF0C33adc636c352",
   "abi": [
     { "type": "constructor", "payable": false, "inputs": [] },
     {
@@ -326,6 +326,15 @@
     },
     {
       "type": "function",
+      "name": "likeFeeRate",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [],
+      "outputs": [{ "type": "uint256" }]
+    },
+    {
+      "type": "function",
       "name": "likePublish",
       "constant": false,
       "stateMutability": "payable",
@@ -494,6 +503,14 @@
         { "type": "address", "name": "to" },
         { "type": "uint256", "name": "tokenId" }
       ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "updateLikeFeeRate",
+      "constant": false,
+      "payable": false,
+      "inputs": [{ "type": "uint256", "name": "fee" }],
       "outputs": []
     },
     {
